@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOPI Digital Research Repository</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Merriweather for academic typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- External Custom Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Merriweather', 'serif'],
+                    },
+                    colors: {
+                        topi: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0ea5e9',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-topi-500 selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-topi-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Brand / Logo -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="resetFilters()">
+                    <div class="bg-white/10 p-2 rounded-lg border border-white/20">
+                        <i class="fa-solid fa-book-atlas text-topi-500 text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg tracking-tight block leading-none">TOPI</span>
+                        <span class="text-xs text-slate-300 font-medium tracking-wider uppercase">Digital Research Repository</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Actions -->
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <button onclick="toggleStatsModal()" class="text-slate-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition hidden sm:flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie"></i> Analytics
+                    </button>
+                    <button onclick="openSubmitModal()" class="bg-topi-500 hover:bg-sky-400 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Deposit Research</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Search Section -->
+    <section class="bg-gradient-to-b from-topi-900 to-topi-800 text-white py-12 sm:py-16 border-b border-topi-700">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+            <span class="inline-block py-1 px-3 rounded-full bg-topi-700/60 border border-topi-500/30 text-sky-200 text-xs font-semibold tracking-wide uppercase mb-4">
+                Open Access Institutional Archive
+            </span>
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-serif font-bold mb-4 tracking-tight">
+                Explore & Preserve Scholarly Knowledge
+            </h1>
+            <p class="text-slate-300 text-base sm:text-lg mb-8 max-w-2xl mx-auto">
+                Discover peer-reviewed papers, datasets, theses, and technical reports curated within the TOPI Digital Research Repository.
+            </p>
+
+            <!-- Search Bar -->
+            <div class="relative max-w-2xl mx-auto">
+                <div class="flex items-center bg-white rounded-xl shadow-lg overflow-hidden p-1.5 focus-within:ring-4 focus-within:ring-topi-500/40 transition">
+                    <div class="pl-4 pr-2 text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="Search by title, author, keyword, or DOI..." 
+                        class="w-full py-2.5 px-2 text-slate-800 placeholder-slate-400 focus:outline-none text-sm sm:text-base"
+                        oninput="handleSearchAndFilter()"
+                    >
+                    <button 
+                        id="clear-search-btn" 
+                        onclick="clearSearch()" 
+                        class="hidden text-slate-400 hover:text-slate-600 px-3 py-2"
+                        title="Clear search"
+                    >
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <button 
+                        onclick="handleSearchAndFilter()" 
+                        class="bg-topi-700 hover:bg-topi-800 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition shrink-0"
+                    >
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Repository Metrics -->
+            <div class="grid grid-cols-3 gap-4 max-w-xl mx-auto mt-8 pt-6 border-t border-white/10 text-center">
+                <div>
+                    <div id="metric-total" class="text-2xl font-bold text-white">0</div>
+                    <div class="text-xs text-slate-300 uppercase tracking-wider">Total Works</div>
+                </div>
+                <div>
+                    <div id="metric-downloads" class="text-2xl font-bold text-sky-300">0</div>
+                    <div class="text-xs text-slate-300 uppercase tracking-wider">Total Downloads</div>
+                </div>
+                <div>
+                    <div id="metric-open" class="text-2xl font-bold text-emerald-300">100%</div>
+                    <div class="text-xs text-slate-300 uppercase tracking-wider">Open Access</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Repository Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            
+            <!-- Left Sidebar: Faceted Filters -->
+            <aside class="w-full lg:w-64 shrink-0 space-y-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-filter text-topi-700 text-sm"></i> Filters
+                        </h2>
+                        <button onclick="resetFilters()" class="text-xs text-topi-700 hover:underline font-medium">
+                            Reset All
+                        </button>
+                    </div>
+
+                    <!-- Filter: Collection / Discipline -->
+                    <div class="mb-6">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Discipline</h3>
+                        <div class="space-y-2" id="discipline-filters"></div>
+                    </div>
+
+                    <!-- Filter: Resource Type -->
+                    <div class="mb-6">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Resource Type</h3>
+                        <div class="space-y-2" id="type-filters"></div>
+                    </div>
+
+                    <!-- Filter: Publication Year -->
+                    <div>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Publication Year</h3>
+                        <select id="year-filter" onchange="handleSearchAndFilter()" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2.5 focus:ring-topi-500 focus:border-topi-500">
+                            <option value="all">All Years</option>
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023 & Earlier</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Repository Info Card -->
+                <div class="bg-topi-50 p-5 rounded-xl border border-topi-100">
+                    <h3 class="font-semibold text-topi-900 text-sm mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-topi-700"></i> About TOPI Archive
+                    </h3>
+                    <p class="text-xs text-slate-600 leading-relaxed mb-3">
+                        All items deposited in the TOPI Digital Research Repository are assigned a persistent handle and indexed for long-term digital preservation.
+                    </p>
+                    <div class="text-xs font-medium text-topi-800">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> OAI-PMH Compliant
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Right Column: Search Results & Controls -->
+            <div class="flex-1">
+                <!-- Results Toolbar -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="text-sm text-slate-600">
+                        Showing <span id="results-count" class="font-bold text-slate-900">0</span> research items
+                        <span id="active-filter-badge" class="hidden ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-topi-100 text-topi-800">
+                            Filtered
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                        <label for="sort-select" class="text-xs font-medium text-slate-500 uppercase">Sort by:</label>
+                        <select id="sort-select" onchange="handleSearchAndFilter()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-topi-500">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="downloads">Most Downloaded</option>
+                            <option value="title">Title (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Research Items List -->
+                <div id="repository-list" class="space-y-4"></div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden bg-white rounded-xl border border-slate-200 p-12 text-center">
+                    <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-1">No matching records found</h3>
+                    <p class="text-slate-500 text-sm max-w-md mx-auto mb-6">
+                        We couldn't find any research papers or datasets matching your current search terms and filter selections.
+                    </p>
+                    <button onclick="resetFilters()" class="bg-topi-700 hover:bg-topi-800 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition">
+                        Clear All Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-16 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-book-atlas text-topi-700"></i>
+                <span class="font-semibold text-slate-700">TOPI Digital Research Repository</span>
+            </div>
+            <div>
+                Preserving Open Science & Institutional Scholarship • Creative Commons Attribution 4.0
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: RESEARCH RECORD DETAIL VIEW -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 modal-animate">
+            <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center z-10">
+                <div class="flex items-center gap-2">
+                    <span id="modal-type-badge" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-topi-100 text-topi-800">Article</span>
+                    <span id="modal-year-badge" class="text-xs font-medium text-slate-500">2026</span>
+                </div>
+                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-100 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 sm:p-8">
+                <h2 id="modal-title" class="text-xl sm:text-2xl font-serif font-bold text-slate-900 mb-3 leading-snug">
+                    Research Title
+                </h2>
+                
+                <div id="modal-authors" class="text-sm font-medium text-topi-700 mb-4 flex flex-wrap gap-2"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200/80 mb-6 text-xs">
+                    <div>
+                        <span class="text-slate-400 block uppercase font-semibold mb-0.5">Persistent Handle / DOI</span>
+                        <span id="modal-doi" class="font-mono text-slate-700 select-all">10.5281/topi.2026.001</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block uppercase font-semibold mb-0.5">Discipline</span>
+                        <span id="modal-discipline" class="font-medium text-slate-700">Computer Science</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block uppercase font-semibold mb-0.5">License & Access</span>
+                        <span class="font-medium text-emerald-700"><i class="fa-solid fa-lock-open mr-1"></i>CC BY 4.0 Open Access</span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Abstract</h3>
+                    <p id="modal-abstract" class="text-slate-700 text-sm leading-relaxed whitespace-pre-line"></p>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Keywords</h3>
+                    <div id="modal-keywords" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <i class="fa-solid fa-quote-left mr-1"></i> Cite this work (APA 7th)
+                        </span>
+                        <button onclick="copyCitation()" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-medium transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-copy"></i> Copy Citation
+                        </button>
+                    </div>
+                    <p id="modal-citation" class="text-xs font-mono text-slate-600 bg-white p-3 rounded-lg border border-slate-200 select-all"></p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-100">
+                    <button id="modal-download-btn" class="flex-1 bg-topi-700 hover:bg-topi-800 text-white py-3 px-5 rounded-xl font-semibold text-sm shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Download Full-Text Document (<span id="modal-filesize">2.4 MB</span>)</span>
+                    </button>
+                    <button onclick="closeDetailModal()" class="py-3 px-5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium text-sm transition">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: DEPOSIT / SUBMIT RESEARCH -->
+    <div id="submit-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 modal-animate">
+            <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center z-10">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-topi-700"></i> Deposit Research to TOPI
+                </h2>
+                <button onclick="closeSubmitModal()" class="text-slate-400 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="deposit-form" onsubmit="handleDepositSubmit(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Title of Work *</label>
+                    <input type="text" id="input-title" required placeholder="e.g., Federated Learning Architectures for Edge IoT Networks" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-topi-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Authors (comma separated) *</label>
+                        <input type="text" id="input-authors" required placeholder="e.g., Dr. A. Sharma, M. Vance" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-topi-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Publication Year *</label>
+                        <input type="number" id="input-year" required value="2026" min="1950" max="2030" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-topi-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Discipline *</label>
+                        <select id="input-discipline" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:ring-2 focus:ring-topi-500 focus:outline-none">
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Environmental Science">Environmental Science</option>
+                            <option value="Biomedical Engineering">Biomedical Engineering</option>
+                            <option value="Social Sciences">Social Sciences</option>
+                            <option value="Physics & Materials">Physics & Materials</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Resource Type *</label>
+                        <select id="input-type" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:ring-2 focus:ring-topi-500 focus:outline-none">
+                            <option value="Journal Article">Journal Article</option>
+                            <option value="Dataset">Dataset</option>
+                            <option value="Thesis / Dissertation">Thesis / Dissertation</option>
+                            <option value="Technical Report">Technical Report</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Abstract *</label>
+                    <textarea id="input-abstract" required rows="4" placeholder="Provide a comprehensive summary of the methodology, findings, and significance..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-topi-500 focus:outline-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Keywords (comma separated) *</label>
+                    <input type="text" id="input-keywords" required placeholder="e.g., Machine Learning, Edge Computing, Privacy" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-topi-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Attach Full-Text Document (PDF, CSV, ZIP) *</label>
+                    <label for="input-file" id="file-dropzone" class="flex flex-col items-center justify-center bg-slate-50 hover:bg-topi-50/60 p-4 rounded-lg border-2 border-dashed border-slate-300 hover:border-topi-500 cursor-pointer text-center transition">
+                        <i id="file-upload-icon" class="fa-solid fa-file-arrow-up text-slate-400 text-2xl mb-1.5"></i>
+                        <p id="file-upload-label" class="text-xs text-slate-700 font-semibold">Click here to choose a PDF or dataset from your device</p>
+                        <p id="file-upload-sublabel" class="text-[11px] text-slate-400 mt-0.5">Supports PDF, CSV, TXT, ZIP • Persistent DOI minted automatically</p>
+                        <input type="file" id="input-file" accept=".pdf,.csv,.txt,.zip,.doc,.docx" class="hidden" onchange="handleFileSelection(event)">
+                    </label>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeSubmitModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-topi-700 hover:bg-topi-800 text-white text-sm font-semibold shadow-sm transition">
+                        Mint DOI & Publish
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: REPOSITORY ANALYTICS -->
+    <div id="stats-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 modal-animate">
+            <div class="border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-simple text-topi-700"></i> Repository Distribution
+                </h2>
+                <button onclick="toggleStatsModal()" class="text-slate-400 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-5" id="analytics-content"></div>
+        </div>
+    </div>
+
+    <!-- External Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
